@@ -22,11 +22,13 @@ $dir = '';
 $fileonly = false;
 $thorough = false;
 $include_regex = false;
-$valid_extensions = array('php', 'html', 'htm', 'txt');
+$valid_extensions = array('php');
 $aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg');
 $scan_aux_files = false;
 $scan_all_files = false;
-$prog = array_shift($argv);
+$prog_path = array_shift($argv);
+$prog_path = pathinfo($prog_path);
+$prog = $prog_path['filename'] . '.' . $prog_path['extension'];
 
 $usage_msg = <<<EOT
 ------------------------
@@ -36,6 +38,7 @@ Usage:
 [OPTIONS]
    -f print only filename and path
    -i include regular expression in output (for debug)
+   -a execute scan against auxiliary file types (not just php)
    -t execute thorough search; will return false positives
 
 EOT;
@@ -101,32 +104,51 @@ if ($thorough)
    $regex = array_merge($regex, $regex_thorough);
 
 if ($scan_aux_files) 
-   $valid_extenstions = array_merge($valid_extensions, $aux_extensions); 
+   $valid_extensions = array_merge($valid_extensions, $aux_extensions); 
 
 $output = '';
 $result_count = 0;
+$infected_files = array();
+
 foreach ($results as $filename) {               // for ($i = 0; $i < count($results); $i++) {
-   $fileinfo = pathinfo($filename);
-   
-   if (@in_array($fileinfo['extension'], $valid_extensions)) {
+   // if a previous regex pattern returned an infected file,
+   // we do not need to scan again.
+   if (in_array($filename, $infected_files))
+      continue;
+
+   // get file extention
+   $extension = pathinfo($filename, PATHINFO_EXTENSION);
+
+   if (@in_array($extension, $valid_extensions)) {
       
       $subject = file_get_contents($filename);
       $timestamp = @date("F d, Y H:i:s", filemtime($filename));   // todo: see PHP date() warning
       
       foreach ($regex as $pattern) {               // for ($j = 0; $j < count($regex); $j++) {
+         // if a previous regex pattern returned an infected file,
+         // we do not need to scan again.
+         if (in_array($filename, $infected_files))
+            break;
+
+         // reached the sentinel "regex"
          if ($pattern == '-t' && !$thorough)
             break;
+
          if (preg_match($pattern, $subject, $matches)) {
-             $result_count += 1;
-             if ($fileonly) {
+             $infected_files[] = $filename;
+
+            // only add to output if a previous scan didn't already
+            // find this file
+            $result_count += 1;
+            if ($fileonly) {
                $output .= "$filename\n";
-             } else {
+            } else {
                $include_regex = true;
                if ($include_regex) $output .= "regex used: $pattern\n";
                $output .= "$filename\t$timestamp\ncontext: " . trim($matches[0]) . "\n__________________________\n";
-             }
-          }
-       }
+            }
+         }
+      }
    }
 }
 
