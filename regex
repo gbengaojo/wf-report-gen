@@ -1,0 +1,14 @@
+==== grep ====
+find . -exec grep -lis '\$sF\[[0-9]\]' {} \;
+find . -exec grep -lis '\$mik3\[[0-9]\]' {} \;
+find . -exec grep -lis 'pussy' {} \;
+find . -exec grep -lis 'chr(115)' {} \;
+find . -exec grep -lis '\$GLOBALS\[\$GLOBALS' {} \;
+find . -exec grep -lis 'obfuscat' {} \;
+find . -exec grep -lis "\$[a-z]\{1,\}\^'" {} \;       // matches, e.g., $tef^' see wp-content/themes/index.php
+find . -exec grep -lis '@fopen' {} \;                 // returns false positives
+find . -exec grep -lis '%[0-9]title%[0-9]' {} \;      // matches, e.g., %1title%2 -- see wp-content/cache_bak/patrician.php
+find . -exec grep -lis '"h"."tac"."c"."es"."s"' {} \;
+
+==== php ====
+
