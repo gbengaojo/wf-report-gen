@@ -20,7 +20,12 @@ function getDirContents($dir, &$results = array()) {
 
 $dir = '';
 $fileonly = false;
+$thorough = false;
 $include_regex = false;
+$valid_extensions = array('php', 'html', 'htm', 'txt');
+$aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg');
+$scan_aux_files = false;
+$scan_all_files = false;
 $prog = array_shift($argv);
 
 $usage_msg = <<<EOT
@@ -30,6 +35,8 @@ Usage:
 
 [OPTIONS]
    -f print only filename and path
+   -i include regular expression in output (for debug)
+   -t execute thorough search; will return false positives
 
 EOT;
 
@@ -39,16 +46,25 @@ if (sizeof($argv) == 0) {
    exit(0);
 }
 
+// echo "\ncount argv: " . count($argv) . "\n"; die;
 while (count($argv) > 0) {
    $arg = array_shift($argv);
+   if (sizeof($argv) == 0 && !is_dir($arg)) {
+      echo sprintf($usage_msg, $prog);
+      exit(0);
+   }
    if (preg_match('/^-[h|\?]/', $arg)) {
       echo sprintf($usage_msg, $prog);
       exit(0);
+   } else if (preg_match('/^-t/', $arg)) {
+      $thorough = true;
    } else if (preg_match('/^-f/', $arg)) {
       $fileonly = true;
-      $dir = array_shift($argv);
-      if (empty($dir)) $dir = '.';
-   } else if (is_file($arg) | is_dir($arg)) {
+   } else if (preg_match('/^-i/', $arg)) {
+      $include_regex = true;
+   } else if (preg_match('/^-a/', $arg)) {
+      $scan_aux_files = true;
+   } else if (is_dir($arg)) {
       $dir = $arg;
    } else {
       $dir = '.';
@@ -73,29 +89,34 @@ $regex = array(
    '/.{0,100}\$[a-zA-Z0-9]{2,6}(\=\s|\s\=|\=)(strtolower|strtoupper)(\(|\s\().{0,100}/i',
    // the following matches, e.g., "if( isset( ${$uvn41}['qf385ab' ])){ eval
    '/.{0,100}if\([\s]*isset\([\s]*\$\{\$\w+\}\[[\s]*[\'|"]\w+[\'|"][\s]*\]*\)[\s]*\)[\s]*\{[\s]*[eval|sprintf].{0,100}/i',  
-
    // the following will return several false positives
    // use the thorough flag to indicate they're execution
+);
+$regex_thorough = array(
    '/.{0,100}@fopen.{0,100}/i',
    '/.{0,100}chr\(\d\).{0,100}/i',
 );
 
-// for each file in $results
-   // for each regular expression in $regex
-      // test the file for the $regex
- 
+if ($thorough)
+   $regex = array_merge($regex, $regex_thorough);
+
+if ($scan_aux_files) 
+   $valid_extenstions = array_merge($valid_extensions, $aux_extensions); 
+
 $output = '';
 $result_count = 0;
 foreach ($results as $filename) {               // for ($i = 0; $i < count($results); $i++) {
    $fileinfo = pathinfo($filename);
-
-   if (@$fileinfo['extension'] == 'php') {                      // todo: just for now
-
-       $subject = file_get_contents($filename);
-       $timestamp = @date("F d, Y H:i:s", filemtime($filename));   // todo: see PHP date() warning
-
-       foreach ($regex as $pattern) {               // for ($j = 0; $j < count($regex); $j++) {
-          if (preg_match($pattern, $subject, $matches)) {
+   
+   if (@in_array($fileinfo['extension'], $valid_extensions)) {
+      
+      $subject = file_get_contents($filename);
+      $timestamp = @date("F d, Y H:i:s", filemtime($filename));   // todo: see PHP date() warning
+      
+      foreach ($regex as $pattern) {               // for ($j = 0; $j < count($regex); $j++) {
+         if ($pattern == '-t' && !$thorough)
+            break;
+         if (preg_match($pattern, $subject, $matches)) {
              $result_count += 1;
              if ($fileonly) {
                $output .= "$filename\n";
