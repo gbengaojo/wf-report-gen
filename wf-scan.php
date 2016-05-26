@@ -22,13 +22,15 @@ $dir = '';
 $fileonly = false;
 $thorough = false;
 $include_regex = false;
-$valid_extensions = array('php');
-$aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg');
+$categorize = false;
 $scan_aux_files = false;
 $scan_all_files = false;
 $prog_path = array_shift($argv);
 $prog_path = pathinfo($prog_path);
 $prog = $prog_path['filename'] . '.' . $prog_path['extension'];
+$valid_extensions = array('php');
+$aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg');
+
 
 $usage_msg = <<<EOT
 ------------------------
@@ -67,6 +69,8 @@ while (count($argv) > 0) {
       $include_regex = true;
    } else if (preg_match('/^-a/', $arg)) {
       $scan_aux_files = true;
+   } else if (preg_match('/^-c/', $arg)) {
+      $categorize = true;
    } else if (is_dir($arg)) {
       $dir = $arg;
    } else {
@@ -80,6 +84,9 @@ $results = getDirContents($dir);
 
 // define regex for scanning
 $regex = array(
+   '/.{0,100}\$[a-zA-Z0-9]{2,6}(\=\s|\s\=|\=)(strtolower|strtoupper)(\(|\s\().{0,100}/i',
+   '/.{0,100}if\([\s]*isset\([\s]*\$\{\$\w+\}\[[\s]*[\'|"]\w+[\'|"][\s]*\]*\)[\s]*\)[\s]*\{[\s]*[eval|sprintf].{0,100}/i',  
+   '/.{0,100}[\'|"]str[\'|"]\.[\'|"]_rot[\'|"]\.[\'|"]1[\'|"]\.[\'|"]3[\'|"].{0,100}/i',
    '/.{0,100}ISbot.{0,100}/', 
    '/.{0,100}\$sF\[\d]\].{0,100}/i',
    '/.{0,100}\$mik3\[\d]\].{0,100}/i',
@@ -88,10 +95,7 @@ $regex = array(
    '/.{0,100}obfuscat.{0,100}/i',
    '/.{0,100}\$\w+\^\'.{0,100}/i',
    '/.{0,100}[0-9a-zA-Z\/\.\+]{32, 64}.{0,100}/i', 
-   '/.{0,100}[\'|"]str[\'|"]\.[\'|"]_rot[\'|"]\.[\'|"]1[\'|"]\.[\'|"]3[\'|"].{0,100}/i',
-   '/.{0,100}\$[a-zA-Z0-9]{2,6}(\=\s|\s\=|\=)(strtolower|strtoupper)(\(|\s\().{0,100}/i',
    // the following matches, e.g., "if( isset( ${$uvn41}['qf385ab' ])){ eval
-   '/.{0,100}if\([\s]*isset\([\s]*\$\{\$\w+\}\[[\s]*[\'|"]\w+[\'|"][\s]*\]*\)[\s]*\)[\s]*\{[\s]*[eval|sprintf].{0,100}/i',  
    // the following will return several false positives
    // use the thorough flag to indicate they're execution
 );
@@ -127,15 +131,18 @@ foreach ($results as $filename) {               // for ($i = 0; $i < count($resu
       foreach ($regex as $pattern) {               // for ($j = 0; $j < count($regex); $j++) {
          // if a previous regex pattern returned an infected file,
          // we do not need to scan again.
-         if (in_array($filename, $infected_files))
-            break;
+         foreach ($infected_files as $regex_category) {
+            if (in_array($filename, $regex_category))
+               break;
+         }
 
          // reached the sentinel "regex"
          if ($pattern == '-t' && !$thorough)
             break;
 
          if (preg_match($pattern, $subject, $matches)) {
-             $infected_files[] = $filename;
+            // add to list of infected files and categorize by regex used
+            $infected_files[$pattern][] = $filename;
 
             // only add to output if a previous scan didn't already
             // find this file
@@ -153,3 +160,16 @@ foreach ($results as $filename) {               // for ($i = 0; $i < count($resu
 }
 
 echo "$result_count Result(s):\n\n$output\n\nTotal Results: $result_count\n\n";
+
+// print categorized output
+if ($categorize == true) {
+   $output = '';
+   foreach ($infected_files as $regex => $matching_files) {
+      $output .= "\nRegex used: " . $regex . "\n";
+      $output .= "-------------------------------------------------------------------------------\n";
+      foreach ($matching_files as $file) {
+         $output .= "$file\n";
+      }
+   }
+   echo $output;
+}
