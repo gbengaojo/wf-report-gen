@@ -17,15 +17,43 @@ function getDirContents($dir, &$results = array()) {
    return $results;
 }
 
+$dir = '';
+$prog = array_shift($argv);
+
+$usage_msg = <<<EOT
+------------------------
+Usage:
+%s [OPTIONS] <DIRECTORY>
+
+[OPTIONS]
+   -f print only filename and path
+
+EOT;
 
 // print help
-if (empty($argv[1])) {
-   echo "Usage: scan <DIRECTORY>\n";
-   exit;
+if (sizeof($argv) == 0) {
+   echo sprintf($usage_msg, $prog);
+   exit(0);
+}
+
+while (count($argv) > 0) {
+   $arg = array_shift($argv);
+   if (preg_match('/^-[h|\?]/', $arg)) {
+      echo sprintf($usage_msg, $prog);
+      exit(0);
+   } else if (preg_match('/^-f/', $arg)) {
+      $fileonly = true;
+      $dir = array_shift($argv);
+      if (empty($dir)) $dir = '.';
+   } else if (is_file($arg) | is_dir($arg)) {
+      $dir = $arg;
+   } else {
+      $dir = '.';
+   }
 }
 
 // put all files into array
-$results = getDirContents($argv[1]);
+$results = getDirContents($dir);
 // print_r($results);
 
 // define regex for scanning
@@ -38,7 +66,12 @@ $regex = array(
    '/.{0,100}\$GLOBALS\[\$GLOBALS.{0,100}/i',
    '/.{0,100}obfuscat.{0,100}/i',
    '/.{0,100}\$\w+\^\'.{0,100}/i',
-   '/.{0,100}@fopen.{0,100}/i',               // returns false positives
+   '/.{0,100}[\w]{32,}.{0,100}/i',            // may return false positives
+   '/.{0,100}@fopen.{0,100}/i',               // may return false positives
+   '/.{0,100}[\'|"]str[\'|"]\.[\'|"]_rot[\'|"]\.[\'|"]1[\'|"]\.[\'|"]3[\'|"].{0,100}/i',
+   '/.{0,100}\$[a-zA-Z0-9]{2,6}(\=\s|\s\=|\=)(strtolower|strtoupper)*(\(|\s\().{0,100}/i',
+   // the following matches, e.g., "if( isset( ${$uvn41}['qf385ab' ])){ eval
+   '/.{0,100}if\([\s]*isset\([\s]*\$\{\$\w+\}\[[\s]*[\'|"]\w+[\'|"][\s]*\]*\)[\s]*\)[\s]*\{[\s]*[eval|sprintf].{0,100}/i',  
 );
 
 // for each file in $results
@@ -56,7 +89,10 @@ foreach ($results as $filename) {               // for ($i = 0; $i < count($resu
 
        foreach ($regex as $pattern) {               // for ($j = 0; $j < count($regex); $j++) {
           if (preg_match($pattern, $subject, $matches)) {
-             $output .= "$filename\t$timestamp\ncontext: " . $matches[0] . "\n__________________________\n";
+             if ($fileonly)
+               $output .= "$filename\n";
+             else
+               $output .= "$filename\t$timestamp\ncontext: " . $matches[0] . "\n__________________________\n";
           }
        }
    }
