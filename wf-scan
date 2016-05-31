@@ -27,7 +27,6 @@ $scan_aux_files = false;
 $scan_all_files = false;
 $prog_path = array_shift($argv);
 $prog_path = pathinfo($prog_path);
-print_r($prog_path); exit;
 $prog = $prog_path['filename'];
 $valid_extensions = array('php', 'htaccess');
 // $aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg', 'txt');
