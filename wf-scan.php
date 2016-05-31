@@ -28,9 +28,9 @@ $scan_all_files = false;
 $prog_path = array_shift($argv);
 $prog_path = pathinfo($prog_path);
 $prog = $prog_path['filename'] . '.' . $prog_path['extension'];
-$valid_extensions = array('php');
-$aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg');
-
+$valid_extensions = array('php', 'htaccess');
+// $aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg', 'txt');
+$aux_extensions = array('html', 'txt');
 
 $usage_msg = <<<EOT
 ------------------------
@@ -38,10 +38,11 @@ Usage:
 %s [OPTIONS] <DIRECTORY>
 
 [OPTIONS]
+   -t execute thorough search; will return false positives
    -f print only filename and path
    -i include regular expression in output (for debug)
    -a execute scan against auxiliary file types (not just php)
-   -t execute thorough search; will return false positives
+   -c categorize results by regex used to define them
 
 EOT;
 
@@ -85,6 +86,7 @@ $results = getDirContents($dir);
 // define regex for scanning
 $regex = array(
    '/.{0,100}\$[a-zA-Z0-9]{2,6}(\=\s|\s\=|\=)(strtolower|strtoupper)(\(|\s\().{0,100}/i',
+   // the following matches, e.g., "if( isset( ${$uvn41}['qf385ab' ])){ eval
    '/.{0,100}if\([\s]*isset\([\s]*\$\{\$\w+\}\[[\s]*[\'|"]\w+[\'|"][\s]*\]*\)[\s]*\)[\s]*\{[\s]*[eval|sprintf].{0,100}/i',  
    '/.{0,100}[\'|"]str[\'|"]\.[\'|"]_rot[\'|"]\.[\'|"]1[\'|"]\.[\'|"]3[\'|"].{0,100}/i',
    '/.{0,100}ISbot.{0,100}/', 
@@ -95,11 +97,13 @@ $regex = array(
    '/.{0,100}obfuscat.{0,100}/i',
    '/.{0,100}\$\w+\^\'.{0,100}/i',
    '/.{0,100}[0-9a-zA-Z\/\.\+]{32, 64}.{0,100}/i', 
-   // the following matches, e.g., "if( isset( ${$uvn41}['qf385ab' ])){ eval
-   // the following will return several false positives
-   // use the thorough flag to indicate they're execution
+   '/.{0,100}chr\(ord\(\s*[\$\w+|\'|"].{0,100}/i',
+   '/.{0,100}[\d{1,3}\.]{4}\s*[,|;|:|\|]+\w+@\w+\.[com|edu|gov|net|org|mil]/i',  // for phished emails
+   // '#.{0,100}@*preg_replace\([\'|"]/\(\.\*\)/e[\'|"],\s*@*{0,100}#i',
 );
 $regex_thorough = array(
+   // the following will return several false positives use the thorough flag
+   // (-t) to indicate they're execution
    '/.{0,100}@fopen.{0,100}/i',
    '/.{0,100}chr\(\d\).{0,100}/i',
 );
@@ -168,7 +172,8 @@ if ($categorize == true) {
       $output .= "\nRegex used: " . $regex . "\n";
       $output .= "-------------------------------------------------------------------------------\n";
       foreach ($matching_files as $file) {
-         $output .= "$file\n";
+         $timestamp = @date("F d, Y H:i:s", filemtime($file));   // todo: see PHP date() warning
+         $output .= "$file, [$timestamp]\n";
       }
    }
    echo $output;
