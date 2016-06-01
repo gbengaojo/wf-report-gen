@@ -1,6 +1,7 @@
 #!/usr/bin/php
 <?php
-
+// todo: Provide file and line # in output
+// todo: Diff against appropriate version and only scan files that differ
 function getDirContents($dir, &$results = array()) {
    $files = scandir($dir);
 
@@ -99,13 +100,42 @@ $regex = array(
    '/.{0,100}[0-9a-zA-Z\/\.\+]{32, 64}.{0,100}/i', 
    '/.{0,100}chr\(ord\(\s*[\$\w+|\'|"].{0,100}/i',
    '/.{0,100}[\d{1,3}\.]{4}\s*[,|;|:|\|]+\w+@\w+\.[com|edu|gov|net|org|mil]/i',  // for phished emails
+   '/.{0,100}@move_uploaded_file.{0,100}/i',
+   '/.{0,100}tes_ini@.{0,100}/i',                                                // @ini_set reversed todo: compile similar
    // '#.{0,100}@*preg_replace\([\'|"]/\(\.\*\)/e[\'|"],\s*@*{0,100}#i',
+
+
+'/46esab/i',
+'/magic Include/i', 
+'/shell/i', 
+'/base64_decode/i',
+'/webadmin/i',
+'/cgishell/i',
+'/windows-125/i',
+'/filesman/i',
+'/bamz/i',
+'/sh3ll/i',
+'/web-shell/i',
+'/shell_exec/i',
+'/phpshell/i',
+'/c999sh/i',
+'/rootShell/i',
+'/edoced_46esab/i',
+'/basez6z4z_zdzezczode/i',
+'/biaisie6i4i_dieicoide/i',
+'/hacked by/i',
+'/"6"\."4"\."_"\."de"/i',
+'/"Cr"\."eat"\."e_fun"\."cti"\."on"/i', 
+"#''/a/e','e'.'v'.'a'.'l'.''#i", 
+
 );
 $regex_thorough = array(
    // the following will return several false positives use the thorough flag
-   // (-t) to indicate they're execution
+   // (-t) to indicate their execution
+   '/.{0,100}redito\.net{0,100}/i',
    '/.{0,100}@fopen.{0,100}/i',
    '/.{0,100}chr\(\d\).{0,100}/i',
+   '/.{0,100}[\\\\x[0-9a-f]{2}]+.{0,100}/i',                                      // \x47\x4cO\x42A\x4c\x53...
 );
 
 if ($thorough)
