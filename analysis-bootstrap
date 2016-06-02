@@ -1,4 +1,5 @@
 #!/usr/bin/php
 <?php
 // Create the directories necessary for report submission
+// Setup vagrant virtual host
 // execute wf-scan?
