@@ -1,0 +1,4 @@
+#!/usr/bin/php
+<?php
+// Create the directories necessary for report submission
+// execute wf-scan?
