@@ -3,3 +3,8 @@
 // Create the directories necessary for report submission
 // Setup vagrant virtual host
 // execute wf-scan?
+// parse relevant files in plugins and themes directories for respective version numbers
+// curl or system exec wget commands to attempt archive download
+// system exec commands to attempt archive inflation
+// system exec commands to execute diffs with output to files
+// parse output files
