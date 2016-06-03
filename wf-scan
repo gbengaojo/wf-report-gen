@@ -57,19 +57,15 @@ Usage:
 
 EOT;
 
-// print help
-if (sizeof($argv) == 0) {
-   echo sprintf($usage_msg, $prog);
-   exit(0);
-}
-
 // echo "\ncount argv: " . count($argv) . "\n"; die;
 while (count($argv) > 0) {
    $arg = array_shift($argv);
+/*
    if (sizeof($argv) == 0 && !is_dir($arg) && !is_file($arg)) {
       echo sprintf($usage_msg, $prog);
       exit(0);
    }
+*/
    if (preg_match('/^-[h|\?]/', $arg)) {
       echo sprintf($usage_msg, $prog);
       exit(0);
@@ -90,9 +86,18 @@ while (count($argv) > 0) {
    }
 }
 
-// put all files into array
-$results = getDirContents($dir);
-// print_r($results);
+//* uncomment for piped input; todo: test and remove comment
+while (false !== ($line = fgets(STDIN))) {
+   $results[] = $line;
+}
+print_r($results); exit;
+// */
+if (empty($results)) {
+   $results = getDirContents($dir);  // put all files into array
+}
+
+
+print_r($results); exit;
 
 // define regex for scanning
 $regex = array(
