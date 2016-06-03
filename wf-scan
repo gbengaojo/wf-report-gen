@@ -87,17 +87,15 @@ while (count($argv) > 0) {
 }
 
 //* uncomment for piped input; todo: test and remove comment
+// must execute in current dir (for now)
 while (false !== ($line = fgets(STDIN))) {
-   $results[] = $line;
+   $results[] = substr($line, 0, strpos($line, ':'));
 }
-print_r($results); exit;
+
 // */
 if (empty($results)) {
    $results = getDirContents($dir);  // put all files into array
 }
-
-
-print_r($results); exit;
 
 // define regex for scanning
 $regex = array(
@@ -109,6 +107,7 @@ $regex = array(
    '/.{0,100}\$sF\[\d]\].{0,100}/i',
    '/.{0,100}\$mik3\[\d]\].{0,100}/i',
    '/.{0,100}pussy.{0,100}/i',
+   '/.{0,100}cialis.{0,100}/i',
    '/.{0,100}\$GLOBALS\[\$GLOBALS.{0,100}/i',
    '/.{0,100}obfuscat.{0,100}/i',
    '/.{0,100}\$\w+\^\'.{0,100}/i',
@@ -143,6 +142,11 @@ $regex = array(
 '/"Cr"\."eat"\."e_fun"\."cti"\."on"/i', 
 "#''/a/e','e'.'v'.'a'.'l'.''#i", 
 
+
+//* ticket specific todo: parameterize
+'/gaggio/',
+//*/
+
 );
 $regex_thorough = array(
    // the following will return several false positives use the thorough flag
@@ -150,7 +154,8 @@ $regex_thorough = array(
    '/.{0,100}redito\.net{0,100}/i',
    '/.{0,100}@fopen.{0,100}/i',
    '/.{0,100}chr\(\d\).{0,100}/i',
-   '/.{0,100}[\\\\x[0-9a-f]{2}]+.{0,100}/i',                                      // \x47\x4cO\x42A\x4c\x53...
+   // '/.{0,100}[x[0-9a-f]{2}]+.{0,100}/i', // todo: determine how to search for \x literal
+   '/x[0-9]+[a-f]+/i',
 );
 
 if ($thorough)
@@ -218,8 +223,8 @@ if ($categorize == true) {
       $output .= "-------------------------------------------------------------------------------\n";
       foreach ($matching_files as $file) {
          $timestamp = @date("F d, Y H:i:s", filemtime($file));   // todo: see PHP date() warning
-         $output .= "$file, [$timestamp]\n";
+         $output .= "$file\t[$timestamp]\n";
       }
    }
-   echo $output;
+   echo $output ."\n\n";
 }
