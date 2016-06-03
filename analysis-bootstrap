@@ -8,3 +8,8 @@
 // system exec commands to attempt archive inflation
 // system exec commands to execute diffs with output to files
 // parse output files
+
+
+// for vagrant
+//    - install memcache
+//    - install unzip
