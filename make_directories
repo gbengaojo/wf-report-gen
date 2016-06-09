@@ -1,0 +1,15 @@
+#!/bin/bash
+mkdir archives
+mkdir logs
+mkdir diffs
+mkdir -p security_analysis/infected-source
+mkdir -p security_analysis/infected-html
+mkdir -p security_analysis/notes
+echo "Security analysis notes" > security_analysis/notes/notes
+echo "Vulnerability RegExps" > security_analysis/notes/vulnerability.txt
+vim _creds
+gpg -d _creds > creds
+rm _creds
+printf "\n ----- Credentials -----\n"
+cat creds
+printf "\n --- end Credentials ---\n\n"
