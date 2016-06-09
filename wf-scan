@@ -40,8 +40,8 @@ $prog_path = array_shift($argv);
 $prog_path = pathinfo($prog_path);
 $prog = $prog_path['filename'];
 $valid_extensions = array('php', 'htaccess');
-// $aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg', 'txt');
-$aux_extensions = array('html', 'txt');
+$aux_extensions = array('css', 'js', 'html', 'htm', 'jpg', 'jpeg', 'txt');
+//$aux_extensions = array('html', 'txt');
 
 $usage_msg = <<<EOT
 ------------------------
