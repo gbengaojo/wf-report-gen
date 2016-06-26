@@ -2,6 +2,7 @@
 mkdir archives
 mkdir logs
 mkdir diffs
+mkdir public_html
 mkdir -p clean/plugins
 mkdir -p clean/themes
 mkdir -p security_analysis/infected-source
