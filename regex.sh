@@ -59,6 +59,7 @@ find . -type f -name '*php*' -exec grep -ni "\$pass=@md5($_POST['pass']);" {} /d
 # ---
 # ---
 
+find . -type f -name '*php*' -exec grep -liP '\$\w+\[.\w.\]\.\$\w+\[.\w.\]' {} \;
 find . -type f -name '*php*' -exec grep -niP '<\?php /\*.*\*/\s*preg_replace' {} /dev/null \;
 find . -type f -name '*php*' -exec grep -niP '/\*[\w+,+]+\*/' {} /dev/null \;
 find . -type f -name '*php*' -exec grep -niP '\$[a-zA-Z0-9]{2,6}(\=\s|\s\=|\=)(strtolower|strtoupper)(\(|\s\()' {} /dev/null \;

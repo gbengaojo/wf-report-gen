@@ -11,8 +11,16 @@ mkdir -p security_analysis/notes
 echo "Security analysis notes" > security_analysis/notes/notes
 echo "Vulnerability RegExps" > security_analysis/notes/vulnerability.txt
 vim _creds
-gpg -d _creds > creds
+echo "\n\n\n" > creds
+echo >> "\n ----- Credentials -----\n\n"
+gpg -d _creds >> creds
+echo >> "\n --- end Credentials ---\n\n"
+
 rm _creds
+
 printf "\n ----- Credentials -----\n"
 cat creds
 printf "\n --- end Credentials ---\n\n"
+
+# cp regexes to this dir
+
